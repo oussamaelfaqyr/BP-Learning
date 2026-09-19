@@ -46,6 +46,7 @@ const ERROR_MESSAGES = {
   weak_password: { status: 400, message: "Le mot de passe doit contenir au moins 10 caractères." },
   invalid_credentials: { status: 401, message: "E-mail ou mot de passe incorrect." },
   account_disabled: { status: 403, message: "Ce compte est désactivé. Contactez votre administrateur." },
+  email_not_verified: { status: 403, message: "Votre adresse e-mail n’est pas vérifiée. Vérifiez votre boîte mail pour activer votre compte." },
   email_taken: { status: 409, message: "Un compte existe déjà avec cette adresse e-mail." },
   registration_disabled: { status: 403, message: "L’inscription publique est désactivée. Contactez votre administrateur." },
   invalid_token: { status: 400, message: "Lien de réinitialisation invalide ou expiré." },

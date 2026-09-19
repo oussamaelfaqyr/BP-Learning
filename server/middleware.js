@@ -45,6 +45,11 @@ function requireAuth() {
       sendError(res, "account_disabled");
       return null;
     }
+    if (!result.user.emailVerified) {
+      res.setHeader("Set-Cookie", clearSessionCookie());
+      sendError(res, "email_not_verified");
+      return null;
+    }
     return { user: result.user, session: result.session, tokenHash: result.tokenHash };
   };
 }

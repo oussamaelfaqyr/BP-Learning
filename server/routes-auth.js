@@ -126,6 +126,9 @@ async function handleLogin(req, res) {
   if (user.status !== "active") {
     return sendError(res, "account_disabled");
   }
+  if (!user.emailVerified) {
+    return sendError(res, "email_not_verified");
+  }
 
   const token = randomToken(32);
   await store.createSession(buildSessionRecord(user._id, token, req));

@@ -108,16 +108,33 @@ async function waitFor(predicate, timeoutMs = 4000) {
   return predicate();
 }
 
+async function verifyRegisteredEmail(email) {
+  const resend = await fetch(`${base}/api/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await resend.json();
+  const token = data.devVerifyUrl.split("token=")[1];
+  window.location.hash = `#/verify-email?token=${token}`;
+  await waitFor(() => {
+    const user = window.BP_PLATFORM && window.BP_PLATFORM.getUser();
+    return user && user.emailVerified === true;
+  }, 4000);
+}
+
 async function registerAsLearner() {
   window.location.hash = "#/register";
   await waitFor(() => window.document.querySelector('[data-auth-form="register"]'));
   const form = window.document.querySelector('[data-auth-form="register"]');
   form.querySelector('[name="firstName"]').value = "Salma";
   form.querySelector('[name="lastName"]').value = "Test";
-  form.querySelector('[name="email"]').value = `salma.${Date.now()}@example.com`;
+  const email = `salma.${Date.now()}@example.com`;
+  form.querySelector('[name="email"]').value = email;
   form.querySelector('[name="password"]').value = "MotDePasse-Test-1!";
   form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
   await waitFor(() => window.location.hash === "#/app");
+  await verifyRegisteredEmail(email);
 }
 
 test("learning path shows module nodes with states", async () => {
@@ -282,10 +299,23 @@ test("simulation result screen presents criteria, priority and targeted practice
   const form = resultWindow.document.querySelector('[data-auth-form="register"]');
   form.querySelector('[name="firstName"]').value = "Yassine";
   form.querySelector('[name="lastName"]').value = "Result";
-  form.querySelector('[name="email"]').value = `yassine.${Date.now()}@example.com`;
+  const email = `yassine.${Date.now()}@example.com`;
+  form.querySelector('[name="email"]').value = email;
   form.querySelector('[name="password"]').value = "MotDePasse-Result-1!";
   form.dispatchEvent(new resultWindow.Event("submit", { bubbles: true, cancelable: true }));
   await waitFor(() => resultWindow.location.hash === "#/app");
+  const resend = await fetch(`${base}/api/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const resendData = await resend.json();
+  const verifyToken = resendData.devVerifyUrl.split("token=")[1];
+  resultWindow.location.hash = `#/verify-email?token=${verifyToken}`;
+  await waitFor(() => {
+    const u = resultWindow.BP_PLATFORM && resultWindow.BP_PLATFORM.getUser();
+    return u && u.emailVerified === true;
+  }, 4000);
   resultWindow.location.hash = "#ia";
   await settle(400);
   const simView = resultWindow.document.querySelector('[data-view="ia"]');

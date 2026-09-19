@@ -31,7 +31,7 @@ function tokenFromUrl(url) {
 test("registration sends verification info and marks the user unverified", async () => {
   resetRateLimits();
   const client = makeClient(base);
-  const user = await registerUser(client, base);
+  const user = await registerUser(client, base, { verify: false });
   assert.equal(user.json.user.emailVerified, false);
   assert.equal(user.json.verification.sent, true);
   assert.ok(user.json.verification.devVerifyUrl, "devVerifyUrl must be present outside production");
@@ -40,7 +40,7 @@ test("registration sends verification info and marks the user unverified", async
 test("verification link confirms the email exactly once", async () => {
   resetRateLimits();
   const client = makeClient(base);
-  const user = await registerUser(client, base);
+  const user = await registerUser(client, base, { verify: false });
   const token = tokenFromUrl(user.json.verification.devVerifyUrl);
 
   const ok = await client.request("POST", "/api/auth/verify-email", { body: { token } });
@@ -69,7 +69,7 @@ test("verification rejects malformed and unknown tokens", async () => {
 test("resend-verification returns 202 and does not leak account existence", async () => {
   resetRateLimits();
   const client = makeClient(base);
-  const user = await registerUser(client, base);
+  const user = await registerUser(client, base, { verify: false });
   const resend = await client.request("POST", "/api/auth/resend-verification", {
     body: { email: user.payload.email },
   });
@@ -86,7 +86,7 @@ test("resend-verification returns 202 and does not leak account existence", asyn
 test("password reset also verifies the email address", async () => {
   resetRateLimits();
   const client = makeClient(base);
-  const user = await registerUser(client, base);
+  const user = await registerUser(client, base, { verify: false });
   assert.equal(user.json.user.emailVerified, false);
 
   const forgot = await client.request("POST", "/api/auth/forgot-password", {

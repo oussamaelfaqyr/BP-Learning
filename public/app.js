@@ -2213,7 +2213,7 @@
     }
     if (platform && !platform.canAccessApp()) {
       hideLearningViews();
-      platform.redirectToLogin();
+      if (!platform.isAuthenticated()) platform.redirectToLogin();
       return;
     }
     if (activeRoute === "lecon") {

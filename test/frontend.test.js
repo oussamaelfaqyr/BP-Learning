@@ -69,6 +69,21 @@ async function waitFor(predicate, timeoutMs = 4000) {
   return predicate();
 }
 
+async function verifyRegisteredEmail(email) {
+  const resend = await fetch(`${base}/api/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await resend.json();
+  const token = data.devVerifyUrl.split("token=")[1];
+  window.location.hash = `#/verify-email?token=${token}`;
+  await waitFor(() => {
+    const user = window.BP_PLATFORM && window.BP_PLATFORM.getUser();
+    return user && user.emailVerified === true;
+  }, 4000);
+}
+
 test("guest lands on the public landing page", async () => {
   await settle();
   const section = window.document.querySelector('[data-view="platform"]');
@@ -94,11 +109,14 @@ test("guest can register and lands on the dashboard", async () => {
   const form = section.querySelector('[data-auth-form="register"]');
   form.querySelector('[name="firstName"]').value = "Leila";
   form.querySelector('[name="lastName"]').value = "Smoke";
-  form.querySelector('[name="email"]').value = `leila.${Date.now()}@example.com`;
+  const email = `leila.${Date.now()}@example.com`;
+  form.querySelector('[name="email"]').value = email;
   form.querySelector('[name="password"]').value = "MotDePasse-Smoke-1!";
   form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
   await waitFor(() => window.location.hash === "#/app");
   assert.equal(window.location.hash, "#/app");
+  await verifyRegisteredEmail(email);
+  window.location.hash = "#/app";
   await waitFor(() => /Bonjour, Leila/.test(section.innerHTML));
   assert.match(section.innerHTML, /Bonjour, Leila/);
 });

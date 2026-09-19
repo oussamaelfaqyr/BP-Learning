@@ -132,7 +132,11 @@
   }
 
   function canAccessApp() {
-    return platform.mode === "authed" || platform.mode === "legacy" || platform.mode === "loading";
+    if (platform.mode === "legacy" || platform.mode === "loading") return true;
+    if (platform.mode === "authed") {
+      return Boolean(platform.user && platform.user.emailVerified);
+    }
+    return false;
   }
 
   function isAdminUser() {
@@ -231,6 +235,7 @@
   }
 
    function navLinks() {
+     if (platform.user && !platform.user.emailVerified) return [];
      const isAdmin = isAdminUser();
      return [
        { route: "/app", label: "Tableau de bord" },
@@ -262,6 +267,7 @@
       return;
     }
      const isAdmin = isAdminUser();
+     const unverified = platform.user && !platform.user.emailVerified;
      navEl.innerHTML = navLinks().map((link) => navLink(link.route, link.label, NAV_ICONS[link.route])).join("");
      authAreaEl.innerHTML = `
        <div class="user-menu">
@@ -275,20 +281,22 @@
              <strong>${escapeHTML(platform.user.firstName)} ${escapeHTML(platform.user.lastName)}</strong>
              <span>${escapeHTML(platform.user.email)}</span>
            </div>
-           <a class="user-menu-item" href="#/profile">${ICON("user")}Mon profil</a>
-           ${isAdmin ? `<a class="user-menu-item" href="#/admin">${ICON("shield")}Administration</a>` : ""}
+           ${unverified ? "" : `<a class="user-menu-item" href="#/profile">${ICON("user")}Mon profil</a>`}
+           ${unverified ? "" : (isAdmin ? `<a class="user-menu-item" href="#/admin">${ICON("shield")}Administration</a>` : "")}
            <button class="user-menu-item danger" type="button" data-logout>${ICON("logout")}Se déconnecter</button>
          </div>
        </div>`;
-    syncMobileNav();
+     syncMobileNav();
   }
 
   function syncMobileNav() {
     if (!mobileNavLinksEl || !mobileAuthEl) return;
     if (platform.mode === "authed") {
+      const unverified = platform.user && !platform.user.emailVerified;
       mobileNavLinksEl.innerHTML = navLinks().map((link) => navLink(link.route, link.label, NAV_ICONS[link.route])).join("");
-      mobileAuthEl.innerHTML = `
-        <a class="button button-secondary" href="#/profile">${ICON("user")}Mon profil</a>
+      mobileAuthEl.innerHTML = unverified
+        ? `<button class="button button-quiet" type="button" data-logout>${ICON("logout")}Se déconnecter</button>`
+        : `<a class="button button-secondary" href="#/profile">${ICON("user")}Mon profil</a>
         <button class="button button-quiet" type="button" data-logout>${ICON("logout")}Se déconnecter</button>`;
     } else {
       if (currentRoute() === "/") {
@@ -417,6 +425,17 @@
     }
 
     if (platform.mode === "authed") {
+      if (platform.user && !platform.user.emailVerified) {
+        if (AUTH_ROUTES.has(route) || route === "/") {
+          renderPlatform(route);
+          return;
+        }
+        platformSection.hidden = false;
+        renderNav();
+        platformSection.innerHTML = renderVerifyRequired();
+        bindPlatformInteractions(route);
+        return;
+      }
       const isAdminRoute = ADMIN_ROUTES.has(route);
        if (isAdminRoute && !isAdminUser()) {
          renderPlatform("/forbidden");
@@ -1124,6 +1143,18 @@
       <h1 tabindex="-1">403 — Zone réservée</h1>
       <p class="lede">Vous n’avez pas les droits nécessaires pour accéder à cette page. Seuls les administrateurs peuvent ouvrir l’espace d’administration.</p>
       <div class="button-row"><a class="button button-primary" href="#/app">Retour à mon tableau de bord</a></div>
+    </div></div>`;
+  }
+
+  function renderVerifyRequired() {
+    return `<div class="page-shell"><div class="card verify-required-card">
+      <div class="card-top"><h1 tabindex="-1">Vérifiez votre adresse e-mail</h1></div>
+      <p class="lede">Votre compte n’est pas encore activé. Ouvrez le lien de vérification reçu par e-mail pour accéder à la plateforme.</p>
+      <p class="small subtle">Vous n’avez rien reçu ? Demandez un nouvel envoi.</p>
+      <div class="button-row">
+        <button class="button button-primary" type="button" data-verify-resend>${ICON("send")}Renvoyer l’e-mail</button>
+        <button class="button button-secondary" type="button" data-logout>${ICON("logout")}Se déconnecter</button>
+      </div>
     </div></div>`;
   }
 
@@ -2339,6 +2370,21 @@
   /* --------------------------- platform interactions --------------------------- */
 
   function bindPlatformInteractions(route) {
+    platformSection.querySelector("[data-verify-resend]")?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        const result = await api("/api/auth/resend-verification", {
+          method: "POST",
+          body: { email: platform.user && platform.user.email },
+        });
+        notify(result.message || "Lien de vérification envoyé. Vérifiez votre boîte mail.");
+      } catch (error) {
+        notify(error.message || "Impossible d’envoyer le lien.");
+      } finally {
+        button.disabled = false;
+      }
+    });
     platformSection.querySelectorAll("[data-auth-form]").forEach((form) => {
       form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -2419,6 +2465,7 @@
     network_error: "Impossible de contacter le service. Vérifiez votre connexion puis réessayez.",
     rate_limit: "Un trop grand nombre de tentatives a été détecté. Réessayez dans quelques instants.",
     db_unavailable: "Le service est momentanément indisponible. Réessayez dans un instant.",
+    email_not_verified: "Votre adresse e-mail n’est pas encore vérifiée. Vérifiez votre boîte mail pour activer votre compte.",
   };
   const AUTH_BUTTONS = {
     login: ["Se connecter", "Connexion…"],

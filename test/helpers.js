@@ -91,6 +91,11 @@ function expectError(response, code) {
 
 const USER_PASSWORD = "motdemodepassededemo";
 
+function verificationTokenFromUrl(url) {
+  const match = String(url).split("token=")[1];
+  return match ? match.split("&")[0] : "";
+}
+
 async function registerUser(client, base, overrides = {}) {
   const payload = {
     firstName: overrides.firstName || "Sara",
@@ -101,6 +106,10 @@ async function registerUser(client, base, overrides = {}) {
   const response = await client.request("POST", "/api/auth/register", { body: payload });
   if (response.status !== 201) {
     throw new Error(`registerUser failed: ${response.status} ${JSON.stringify(response.json)}`);
+  }
+  if (overrides.verify !== false && response.json.verification && response.json.verification.devVerifyUrl) {
+    const token = verificationTokenFromUrl(response.json.verification.devVerifyUrl);
+    await client.request("POST", "/api/auth/verify-email", { body: { token } });
   }
   return { ...response, payload };
 }
@@ -120,6 +129,10 @@ async function registerAdmin(client, base) {
   const response = await client.request("POST", "/api/auth/register", { body: payload });
   if (response.status !== 201) {
     throw new Error(`registerAdmin failed: ${response.status} ${JSON.stringify(response.json)}`);
+  }
+  if (response.json.verification && response.json.verification.devVerifyUrl) {
+    const token = verificationTokenFromUrl(response.json.verification.devVerifyUrl);
+    await client.request("POST", "/api/auth/verify-email", { body: { token } });
   }
   return { ...response, payload, email: adminEmail };
 }

@@ -57,6 +57,30 @@ async function settle(ms = 150) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitFor(predicate, timeoutMs = 4000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (predicate()) return true;
+    await settle(50);
+  }
+  return predicate();
+}
+
+async function verifyRegisteredEmail(email) {
+  const resend = await fetch(`${base}/api/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await resend.json();
+  const token = data.devVerifyUrl.split("token=")[1];
+  window.location.hash = `#/verify-email?token=${token}`;
+  await waitFor(() => {
+    const user = window.BP_PLATFORM && window.BP_PLATFORM.getUser();
+    return user && user.emailVerified === true;
+  }, 4000);
+}
+
 test("admin user can register and access the admin dashboard", async () => {
   await settle(300);
   window.location.hash = "#/register";
@@ -69,6 +93,9 @@ test("admin user can register and access the admin dashboard", async () => {
   form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
   await settle(500);
   assert.equal(window.location.hash, "#/app");
+  await verifyRegisteredEmail("admin.ui@example.com");
+  window.location.hash = "#/app";
+  await settle(400);
   const nav = window.document.querySelector("[data-nav]");
   assert.match(nav.innerHTML, /Administration/);
 });

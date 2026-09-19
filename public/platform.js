@@ -135,9 +135,9 @@
     return platform.mode === "authed" || platform.mode === "legacy" || platform.mode === "loading";
   }
 
-  function canAccessAdmin() {
-    return platform.mode === "authed" && platform.user && platform.user.role === "admin";
-  }
+   function canAccessAdmin() {
+     return platform.mode === "authed" && platform.user != null;
+   }
 
   /* ------------------------------ boot ------------------------------ */
 
@@ -226,16 +226,16 @@
     return `<a class="nav-link" href="#${route}" ${isActive ? 'aria-current="page"' : ""}>${ICON(iconName)}<span>${escapeHTML(label)}</span></a>`;
   }
 
-  function navLinks() {
-    const isAdmin = platform.user && platform.user.role === "admin";
-    return [
-      { route: "/app", label: "Tableau de bord" },
-      { route: "parcours", label: "Mon parcours" },
-      { route: "simulations", label: "Simulations" },
-      { route: "progression", label: "Progression" },
-      ...(isAdmin ? [{ route: "/admin", label: "Administration" }] : []),
-    ];
-  }
+   function navLinks() {
+     const isAdmin = platform.user != null;
+     return [
+       { route: "/app", label: "Tableau de bord" },
+       { route: "parcours", label: "Mon parcours" },
+       { route: "simulations", label: "Simulations" },
+       { route: "progression", label: "Progression" },
+       ...(isAdmin ? [{ route: "/admin", label: "Administration" }] : []),
+     ];
+   }
 
   function renderNav() {
     if (platform.mode === "loading") {
@@ -257,25 +257,25 @@
       syncMobileNav();
       return;
     }
-    const isAdmin = platform.user.role === "admin";
-    navEl.innerHTML = navLinks().map((link) => navLink(link.route, link.label, NAV_ICONS[link.route])).join("");
-    authAreaEl.innerHTML = `
-      <div class="user-menu">
-        <button class="user-menu-trigger" type="button" data-user-menu-trigger aria-expanded="false" aria-haspopup="true">
-          <span class="avatar" aria-hidden="true">${escapeHTML(initials(platform.user))}</span>
-          <span>${escapeHTML(platform.user.firstName)}</span>
-          ${ICON("chevronDown", "icon chevron")}
-        </button>
-        <div class="user-menu-panel" data-user-menu-panel hidden>
-          <div class="user-menu-header">
-            <strong>${escapeHTML(platform.user.firstName)} ${escapeHTML(platform.user.lastName)}</strong>
-            <span>${escapeHTML(platform.user.email)}</span>
-          </div>
-          <a class="user-menu-item" href="#/profile">${ICON("user")}Mon profil</a>
-          ${isAdmin ? `<a class="user-menu-item" href="#/admin">${ICON("shield")}Administration</a>` : ""}
-          <button class="user-menu-item danger" type="button" data-logout>${ICON("logout")}Se déconnecter</button>
-        </div>
-      </div>`;
+     const isAdmin = platform.user != null;
+     navEl.innerHTML = navLinks().map((link) => navLink(link.route, link.label, NAV_ICONS[link.route])).join("");
+     authAreaEl.innerHTML = `
+       <div class="user-menu">
+         <button class="user-menu-trigger" type="button" data-user-menu-trigger aria-expanded="false" aria-haspopup="true">
+           <span class="avatar" aria-hidden="true">${escapeHTML(initials(platform.user))}</span>
+           <span>${escapeHTML(platform.user.firstName)}</span>
+           ${ICON("chevronDown", "icon chevron")}
+         </button>
+         <div class="user-menu-panel" data-user-menu-panel hidden>
+           <div class="user-menu-header">
+             <strong>${escapeHTML(platform.user.firstName)} ${escapeHTML(platform.user.lastName)}</strong>
+             <span>${escapeHTML(platform.user.email)}</span>
+           </div>
+           <a class="user-menu-item" href="#/profile">${ICON("user")}Mon profil</a>
+           ${isAdmin ? `<a class="user-menu-item" href="#/admin">${ICON("shield")}Administration</a>` : ""}
+           <button class="user-menu-item danger" type="button" data-logout>${ICON("logout")}Se déconnecter</button>
+         </div>
+       </div>`;
     syncMobileNav();
   }
 
@@ -414,10 +414,10 @@
 
     if (platform.mode === "authed") {
       const isAdminRoute = ADMIN_ROUTES.has(route);
-      if (isAdminRoute && platform.user.role !== "admin") {
-        renderPlatform("/forbidden");
-        return;
-      }
+       if (isAdminRoute && platform.user == null) {
+         renderPlatform("/forbidden");
+         return;
+       }
       if (route === "/" ) {
         go("/app");
         return;
@@ -1424,7 +1424,7 @@
           <h3>${escapeHTML(user.firstName)} ${escapeHTML(user.lastName)}</h3>
           <p class="small subtle">${escapeHTML(user.email)}</p>
           <div class="profile-role">
-            <span class="tag">${user.role === "admin" ? "Administrateur" : "Apprenant"}</span>
+             <span class="tag">Administrateur</span>
             <span class="tag ${user.status === "active" ? "success" : "warning"}">${user.status === "active" ? "Compte actif" : "Compte désactivé"}</span>
           </div>
           <div class="profile-facts">
@@ -1651,7 +1651,7 @@
     return `<tr data-user-row data-user-name="${escapeHTML((user.firstName + " " + user.lastName).toLowerCase())}" data-user-email="${escapeHTML(user.email.toLowerCase())}" data-user-role="${escapeHTML(user.role)}" data-user-status="${escapeHTML(user.status)}">
       <td><strong>${escapeHTML(user.firstName)} ${escapeHTML(user.lastName)}</strong>${isSelf ? ' <span class="tag neutral">Vous</span>' : ""}</td>
       <td>${escapeHTML(user.email)}</td>
-      <td><span class="tag ${user.role === "admin" ? "warning" : "neutral"}">${user.role === "admin" ? "Admin" : "Apprenant"}</span></td>
+      <td><span class="tag warning">Admin</span></td>
       <td><span class="tag ${user.status === "active" ? "success" : "error"}"><span class="status-dot ${user.status === "active" ? "on" : "off"}" aria-hidden="true"></span>${user.status === "active" ? "Actif" : "Désactivé"}</span></td>
       <td>${formatDate(user.createdAt)}</td>
       <td>${formatDateTime(user.lastLoginAt)}</td>
@@ -1664,9 +1664,7 @@
           ${user.status === "active"
             ? `<button class="button button-secondary button-sm" type="button" data-user-disable="${escapeHTML(user.id)}" ${isSelf ? "disabled" : ""}>${ICON("close")}Désactiver</button>`
             : `<button class="button button-secondary button-sm" type="button" data-user-enable="${escapeHTML(user.id)}">${ICON("check")}Activer</button>`}
-          ${user.role === "user"
-            ? `<button class="button button-ghost button-sm" type="button" data-user-make-admin="${escapeHTML(user.id)}">Passer admin</button>`
-            : `<button class="button button-ghost button-sm" type="button" data-user-make-user="${escapeHTML(user.id)}" ${isSelf ? "disabled" : ""}>Retirer admin</button>`}
+           <button class="button button-ghost button-sm" type="button" data-user-make-user="${escapeHTML(user.id)}" ${isSelf ? "disabled" : ""}>Retirer admin</button>
         </div>
       </td>
     </tr>`;

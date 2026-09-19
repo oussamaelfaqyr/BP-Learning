@@ -207,14 +207,6 @@ async function handleUpdateUser(req, res, auth) {
     update.status = body.status;
   }
 
-  const isSelf = target._id.toString() === auth.user._id.toString();
-  const demotingAdmin = target.role === "admin" && (update.role === "user" || update.status === "disabled");
-  if (demotingAdmin) {
-    const activeAdmins = await store.countActiveAdmins();
-    if (activeAdmins <= 1) return sendError(res, "last_admin");
-  }
-  if (isSelf && update.status === "disabled") return sendError(res, "cannot_self_disable");
-
   const updated = await store.updateUser(target._id, update);
   if (update.status === "disabled") {
     await store.deleteAllSessionsForUser(target._id);

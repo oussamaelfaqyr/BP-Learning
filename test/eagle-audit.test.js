@@ -35,7 +35,7 @@ const BOUND_ATTRS = new Set([
   "data-ai-analyze", "data-ai-replay", "data-sim-scenario", "data-sim-retry", "data-tts", "data-tts-toggle", "data-tts-stop", "data-path-create",
   "data-goal-chip", "data-path-retry", "data-path-open-lesson", "data-path-complete", "data-path-retry-lesson",
   "data-path-answer", "data-path-answer-input", "data-path-recommend", "data-coach-toggle", "data-coach-open",
-  "data-coach-prompt", "data-exercise-retry", "data-course-structure", "data-formations-search", "data-logout",
+  "data-exercise-retry", "data-course-structure", "data-formations-search", "data-logout",
   "data-user-menu-trigger", "data-reload-view", "data-error-retry", "data-continue-course", "data-course-focus",
   "data-admin-create-user", "data-user-performance", "data-user-reset", "data-user-disable", "data-user-enable",
   "data-user-make-admin", "data-user-make-user", "data-users-search", "data-users-role", "data-users-status",

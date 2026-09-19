@@ -1,4 +1,5 @@
 import io
+import re
 
 import edge_tts
 from fastapi import FastAPI
@@ -7,14 +8,22 @@ from pydantic import BaseModel
 
 app = FastAPI(title="BP Learning TTS")
 
-VOICES = {"fr-FR-DeniseNeural", "ar-MA-MounaNeural"}
-DEFAULT_VOICE = "fr-FR-DeniseNeural"
+VOICES = {
+    "fr-FR-VivienneMultilingualNeural",
+    "fr-FR-RemyMultilingualNeural",
+    "fr-FR-DeniseNeural",
+    "ar-MA-MounaNeural",
+    "ar-MA-JamalNeural",
+}
+DEFAULT_VOICE = "fr-FR-VivienneMultilingualNeural"
 MAX_TEXT = 1500
 
 
 class TTSRequest(BaseModel):
     text: str
     voice: str = DEFAULT_VOICE
+    rate: str = "-4%"
+    pitch: str = "+0Hz"
 
 
 @app.get("/health")
@@ -27,9 +36,22 @@ async def tts(req: TTSRequest):
     text = req.text.strip()[:MAX_TEXT]
     if not text:
         return Response(content=b"", status_code=400)
-    voice = req.voice if req.voice in VOICES else DEFAULT_VOICE
+    
+    # Auto-detect Arabic characters to route to Moroccan Arabic voice if voice is a French default
+    voice = req.voice
+    if voice == "fr-FR-DeniseNeural" or voice == "fr-FR-VivienneMultilingualNeural":
+        if re.search(r"[\u0600-\u06FF]", text):
+            voice = "ar-MA-MounaNeural"
+
+    if voice not in VOICES:
+        voice = DEFAULT_VOICE
     try:
-        communicate = edge_tts.Communicate(text, voice)
+        communicate = edge_tts.Communicate(
+            text,
+            voice,
+            rate=req.rate,
+            pitch=req.pitch
+        )
         buffer = io.BytesIO()
         async for chunk in communicate.stream():
             if chunk.get("type") == "audio":

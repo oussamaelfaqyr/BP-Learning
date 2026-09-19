@@ -40,8 +40,14 @@ const TTS_CACHE_DIR =
   (process.env.VERCEL
     ? path.join(os.tmpdir(), "bp-learning-tts")
     : path.join(__dirname, "..", ".tts-cache"));
-const TTS_VOICES = ["fr-FR-DeniseNeural", "ar-MA-MounaNeural"];
-const TTS_DEFAULT_VOICE = "fr-FR-DeniseNeural";
+const TTS_VOICES = [
+  "fr-FR-VivienneMultilingualNeural",
+  "fr-FR-RemyMultilingualNeural",
+  "fr-FR-DeniseNeural",
+  "ar-MA-MounaNeural",
+  "ar-MA-JamalNeural",
+];
+const TTS_DEFAULT_VOICE = "fr-FR-VivienneMultilingualNeural";
 const TTS_MAX_TEXT = 1500;
 const TTS_TIMEOUT_MS = 30000;
 
@@ -446,7 +452,9 @@ async function handleTts(req, res, auth) {
     return;
   }
   const voice = TTS_VOICES.includes(body.voice) ? body.voice : TTS_DEFAULT_VOICE;
-  const cacheKey = crypto.createHash("sha256").update(`${voice}|${text}`).digest("hex");
+  const rate = typeof body.rate === "string" ? body.rate : "-4%";
+  const pitch = typeof body.pitch === "string" ? body.pitch : "+0Hz";
+  const cacheKey = crypto.createHash("sha256").update(`${voice}|${rate}|${pitch}|${text}`).digest("hex");
   const cachePath = path.join(TTS_CACHE_DIR, `${cacheKey}.mp3`);
   if (fs.existsSync(cachePath)) {
     serveMp3(res, cachePath);
@@ -459,7 +467,7 @@ async function handleTts(req, res, auth) {
     upstream = await fetch(`${TTS_SERVICE_URL}/tts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, voice }),
+      body: JSON.stringify({ text, voice, rate, pitch }),
       signal: controller.signal,
     });
   } catch {

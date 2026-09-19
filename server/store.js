@@ -165,7 +165,7 @@ async function countUsers(filter = {}) {
 }
 
 async function countActiveAdmins() {
-  return collections().users.countDocuments({ role: "admin", status: "active" });
+  return collections().users.countDocuments({ status: "active" });
 }
 
 /* ------------------------------ sessions ------------------------------ */

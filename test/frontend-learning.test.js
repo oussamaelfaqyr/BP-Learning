@@ -158,10 +158,8 @@ test("lesson sections render distinct visual blocks", async () => {
   assert.ok(view.querySelector(".exercise-box"), "exercise block");
 });
 
-test("coach panel offers quick prompts and collapses", async () => {
+test("coach panel collapses and reopens", async () => {
   const view = window.document.querySelector('[data-view="lecon"]');
-  const prompts = view.querySelectorAll("[data-coach-prompt]");
-  assert.equal(prompts.length, 4);
   const toggle = view.querySelector("[data-coach-toggle]");
   toggle.click();
   await settle(150);
@@ -175,7 +173,10 @@ test("coach panel offers quick prompts and collapses", async () => {
 
 test("coach question shows a visible error when the AI is unreachable", async () => {
   const view = window.document.querySelector('[data-view="lecon"]');
-  view.querySelector("[data-coach-prompt]").click();
+  const input = view.querySelector("[data-tutor-input]");
+  input.value = "Test";
+  input.dispatchEvent(new window.Event("input", { bubbles: true }));
+  view.querySelector("[data-tutor-form]").dispatchEvent(new window.Event("submit", { bubbles: true }));
   await waitFor(() => /Réessayer/.test(window.document.querySelector('[data-view="lecon"]').innerHTML), 6000);
   const lessonView = window.document.querySelector('[data-view="lecon"]');
   assert.match(lessonView.innerHTML, /Réessayer/);

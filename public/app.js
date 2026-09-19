@@ -670,7 +670,7 @@
     const response = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text.slice(0, 1500), voice: "fr-FR-DeniseNeural" }),
+      body: JSON.stringify({ text: text.slice(0, 1500), voice: "fr-FR-VivienneMultilingualNeural" }),
     });
     if (!response.ok) throw new Error("tts_failed");
     const blob = await response.blob();
@@ -1976,11 +1976,6 @@
                 <div><h3>Coach IA</h3><span class="coach-sub">Spécialiste de cette leçon</span></div>
                 <button class="coach-toggle" type="button" data-coach-toggle aria-label="Masquer le coach IA" aria-expanded="true">${ICON("close")}</button>
               </div>
-              ${tutorMessages.length === 0
-                ? `<div class="coach-quick" aria-label="Suggestions de questions">
-                    ${quickPrompts.map(([label]) => `<button type="button" data-coach-prompt="${escapeHTML(label)}">${escapeHTML(label)}</button>`).join("")}
-                  </div>`
-                : ""}
               <div class="coach-messages">
                 ${coachEmpty}
                 ${tutorMessages.map((message) => `<div class="message${message.role === "user" ? " user" : ""}">${escapeHTML(message.content)}</div>`).join("")}
@@ -2492,11 +2487,6 @@
       coachCollapsed = false;
       render("lecon");
     });
-    document.querySelectorAll("[data-coach-prompt]").forEach((button) => button.addEventListener("click", () => {
-      const moduleId = pathState.activeModuleId;
-      if (!moduleId || pathState.tutorBusy) return;
-      sendTutorMessage(moduleId, button.dataset.coachPrompt);
-    }));
     document.querySelector("[data-exercise-retry]")?.addEventListener("click", () => {
       const moduleId = pathState.activeModuleId;
       if (!moduleId) return;

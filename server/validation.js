@@ -119,7 +119,7 @@ function validateAdminUserInput(body, { requirePassword = false } = {}) {
   const firstName = cleanString(body.firstName, MAX_NAME_LENGTH);
   const lastName = cleanString(body.lastName, MAX_NAME_LENGTH);
   const email = normalizeEmail(body.email);
-  const role = typeof body.role === "string" && body.role.trim() ? body.role.trim() : "admin";
+  const role = typeof body.role === "string" && body.role.trim() ? body.role.trim() : "user";
   if (!isValidName(firstName)) return { error: "invalid_first_name" };
   if (!isValidName(lastName)) return { error: "invalid_last_name" };
   if (!email) return { error: "invalid_email" };

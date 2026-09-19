@@ -75,11 +75,11 @@ test("invited user can set a password through the reset flow and log in", async 
   const token = created.json.devResetUrl.split("token=")[1];
   const invitedClient = makeClient(base);
   const reset = await invitedClient.request("POST", "/api/auth/reset-password", {
-    body: { token, password: "PremierMotDePasse-777!" },
+    body: { token, password: "premiermodepassedemo" },
   });
   assert.equal(reset.status, 200);
   const login = await invitedClient.request("POST", "/api/auth/login", {
-    body: { email: created.json.user.email, password: "PremierMotDePasse-777!" },
+    body: { email: created.json.user.email, password: "premiermodepassedemo" },
   });
   assert.equal(login.status, 200);
 });
@@ -273,6 +273,47 @@ test("archive a course and verify it disappears from learner courses", async () 
   });
   const archive = await adminClient.request("POST", `/api/admin/courses/${courseId}/archive`);
   assert.equal(archive.status, 200);
+  const myCourses = await userClient.request("GET", "/api/me/courses");
+  assert.equal(myCourses.json.courses.some((course) => course.id === courseId), false);
+});
+
+test("admin can permanently delete a user and their data", async () => {
+  const targetClient = makeClient(base);
+  const target = await registerUser(targetClient, base);
+  const usersBefore = await adminClient.request("GET", "/api/admin/users");
+  assert.ok(usersBefore.json.users.some((item) => item.id === target.json.user.id));
+
+  const deleted = await adminClient.request("DELETE", `/api/admin/users/${target.json.user.id}`);
+  assert.equal(deleted.status, 200);
+
+  const usersAfter = await adminClient.request("GET", "/api/admin/users");
+  assert.equal(usersAfter.json.users.some((item) => item.id === target.json.user.id), false);
+
+  const me = await targetClient.request("GET", "/api/me");
+  expectError(me, "unauthorized");
+});
+
+test("admin cannot delete their own account", async () => {
+  const users = await adminClient.request("GET", "/api/admin/users");
+  const self = users.json.users.find((item) => item.id === admin.json.user.id);
+  const deleted = await adminClient.request("DELETE", `/api/admin/users/${self.id}`);
+  expectError(deleted, "cannot_delete_self");
+});
+
+test("admin can delete a course and its assignments", async () => {
+  const created = await adminClient.request("POST", "/api/admin/courses", { body: { ...COURSE, title: "Cours à supprimer" } });
+  const courseId = created.json.course.id;
+  await adminClient.request("POST", `/api/admin/courses/${courseId}/publish`);
+  await adminClient.request("POST", "/api/admin/assignments", {
+    body: { courseId, userIds: [user.json.user.id] },
+  });
+
+  const deleted = await adminClient.request("DELETE", `/api/admin/courses/${courseId}`);
+  assert.equal(deleted.status, 200);
+
+  const courses = await adminClient.request("GET", "/api/admin/courses");
+  assert.equal(courses.json.courses.some((course) => course.id === courseId), false);
+
   const myCourses = await userClient.request("GET", "/api/me/courses");
   assert.equal(myCourses.json.courses.some((course) => course.id === courseId), false);
 });

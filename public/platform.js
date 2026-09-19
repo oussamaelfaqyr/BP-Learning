@@ -135,9 +135,13 @@
     return platform.mode === "authed" || platform.mode === "legacy" || platform.mode === "loading";
   }
 
-   function canAccessAdmin() {
-     return platform.mode === "authed" && platform.user != null;
-   }
+  function isAdminUser() {
+    return platform.mode === "authed" && platform.user != null && platform.user.role === "admin";
+  }
+
+  function canAccessAdmin() {
+    return isAdminUser();
+  }
 
   /* ------------------------------ boot ------------------------------ */
 
@@ -227,7 +231,7 @@
   }
 
    function navLinks() {
-     const isAdmin = platform.user != null;
+     const isAdmin = isAdminUser();
      return [
        { route: "/app", label: "Tableau de bord" },
        { route: "parcours", label: "Mon parcours" },
@@ -257,7 +261,7 @@
       syncMobileNav();
       return;
     }
-     const isAdmin = platform.user != null;
+     const isAdmin = isAdminUser();
      navEl.innerHTML = navLinks().map((link) => navLink(link.route, link.label, NAV_ICONS[link.route])).join("");
      authAreaEl.innerHTML = `
        <div class="user-menu">
@@ -414,7 +418,7 @@
 
     if (platform.mode === "authed") {
       const isAdminRoute = ADMIN_ROUTES.has(route);
-       if (isAdminRoute && platform.user == null) {
+       if (isAdminRoute && !isAdminUser()) {
          renderPlatform("/forbidden");
          return;
        }
@@ -478,7 +482,9 @@
         });
       return;
     }
-    platformSection.innerHTML = result;
+    if (typeof result === "string") {
+      platformSection.innerHTML = result;
+    }
     bindPlatformInteractions(route);
   }
 
@@ -1651,7 +1657,7 @@
     return `<tr data-user-row data-user-name="${escapeHTML((user.firstName + " " + user.lastName).toLowerCase())}" data-user-email="${escapeHTML(user.email.toLowerCase())}" data-user-role="${escapeHTML(user.role)}" data-user-status="${escapeHTML(user.status)}">
       <td><strong>${escapeHTML(user.firstName)} ${escapeHTML(user.lastName)}</strong>${isSelf ? ' <span class="tag neutral">Vous</span>' : ""}</td>
       <td>${escapeHTML(user.email)}</td>
-      <td><span class="tag warning">Admin</span></td>
+      <td>${user.role === "admin" ? '<span class="tag warning">Admin</span>' : '<span class="tag neutral">Apprenant</span>'}</td>
       <td><span class="tag ${user.status === "active" ? "success" : "error"}"><span class="status-dot ${user.status === "active" ? "on" : "off"}" aria-hidden="true"></span>${user.status === "active" ? "Actif" : "Désactivé"}</span></td>
       <td>${formatDate(user.createdAt)}</td>
       <td>${formatDateTime(user.lastLoginAt)}</td>
@@ -1665,6 +1671,7 @@
             ? `<button class="button button-secondary button-sm" type="button" data-user-disable="${escapeHTML(user.id)}" ${isSelf ? "disabled" : ""}>${ICON("close")}Désactiver</button>`
             : `<button class="button button-secondary button-sm" type="button" data-user-enable="${escapeHTML(user.id)}">${ICON("check")}Activer</button>`}
            <button class="button button-ghost button-sm" type="button" data-user-make-user="${escapeHTML(user.id)}" ${isSelf ? "disabled" : ""}>Retirer admin</button>
+           <button class="button button-danger button-sm" type="button" data-user-delete="${escapeHTML(user.id)}" ${isSelf ? "disabled" : ""}>${ICON("trash")}Supprimer</button>
         </div>
       </td>
     </tr>`;
@@ -1810,6 +1817,22 @@
         notify(error.message || "Impossible de réinitialiser l’accès.");
       }
     }));
+    platformSection.querySelectorAll("[data-user-delete]").forEach((button) => button.addEventListener("click", async (event) => {
+      const userId = event.currentTarget.dataset.userDelete;
+      const confirmed = await confirmDialog({
+        title: "Supprimer cet utilisateur ?",
+        message: "Cette action est irréversible : le compte et toutes ses données (progression, simulations, évaluations, affectations) seront supprimés définitivement.",
+        confirmLabel: "Supprimer définitivement",
+      });
+      if (!confirmed) return;
+      try {
+        await api(`/api/admin/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
+        notify("Utilisateur supprimé.");
+        renderAdminUsers();
+      } catch (error) {
+        notify(error.message || "Impossible de supprimer l’utilisateur.");
+      }
+    }));
   }
 
   async function updateUserStatus(userId, status) {
@@ -1883,6 +1906,7 @@
               ${course.status === "draft" ? `<button class="button button-primary button-sm" type="button" data-course-publish="${escapeHTML(course.id)}">${ICON("check")}Publier</button>` : ""}
               ${course.status === "published" ? `<button class="button button-secondary button-sm" type="button" data-course-archive="${escapeHTML(course.id)}">Archiver</button>` : ""}
               <button class="button button-quiet button-sm" type="button" data-course-edit="${escapeHTML(course.id)}">${ICON("settings")}Modifier</button>
+              <button class="button button-danger button-sm" type="button" data-course-delete="${escapeHTML(course.id)}">${ICON("trash")}Supprimer</button>
             </div>
           </td>
         </tr>`).join("")
@@ -1964,6 +1988,22 @@
         notify(error.message || "Impossible d’ouvrir le cours.");
       }
     }));
+    platformSection.querySelectorAll("[data-course-delete]").forEach((button) => button.addEventListener("click", async (event) => {
+      const courseId = event.currentTarget.dataset.courseDelete;
+      const confirmed = await confirmDialog({
+        title: "Supprimer ce cours ?",
+        message: "Cette action est irréversible : le cours, ses modules et toutes les affectations associées seront supprimés définitivement.",
+        confirmLabel: "Supprimer définitivement",
+      });
+      if (!confirmed) return;
+      try {
+        await api(`/api/admin/courses/${encodeURIComponent(courseId)}`, { method: "DELETE" });
+        notify("Cours supprimé.");
+        renderAdminCourses();
+      } catch (error) {
+        notify(error.message || "Impossible de supprimer le cours.");
+      }
+    }));
   }
 
   function openCourseEditor(courseId, course) {
@@ -1979,10 +2019,11 @@
         <div class="field"><label class="field-label" for="ce-duration">Durée estimée</label><input id="ce-duration" class="input-text" name="estimatedDuration" value="${escapeHTML(course.estimatedDuration || "Environ 20 minutes")}" maxlength="60" /></div>
         <div class="field"><span class="field-label">Modules</span>
           <div data-module-list>${(course.modules || []).map((module, index) => `
-            <div class="module-editor-row" data-module-row="${index}">
-              <input class="input-text" name="module-id-${index}" value="${escapeHTML(module.id)}" maxlength="40" aria-label="Identifiant du module ${index + 1}" />
-              <input class="input-text" name="module-title-${index}" value="${escapeHTML(module.title)}" maxlength="160" aria-label="Titre du module ${index + 1}" required />
-              <textarea class="textarea" name="module-description-${index}" rows="1" maxlength="400" aria-label="Description du module ${index + 1}" required>${escapeHTML(module.description)}</textarea>
+            <div class="module-editor-row" data-module-row>
+              <input class="input-text" data-module-id value="${escapeHTML(module.id)}" maxlength="40" aria-label="Identifiant du module ${index + 1}" />
+              <input class="input-text" data-module-title value="${escapeHTML(module.title)}" maxlength="160" aria-label="Titre du module ${index + 1}" required />
+              <textarea class="textarea" data-module-description rows="1" maxlength="400" aria-label="Description du module ${index + 1}" required>${escapeHTML(module.description)}</textarea>
+              <button class="button button-ghost button-sm" type="button" data-module-remove>${ICON("trash")}Supprimer</button>
             </div>`).join("")}</div>
         </div>
         <div class="form-error" data-course-edit-error></div>
@@ -1992,15 +2033,19 @@
         </div>
       </form>`;
     editor.querySelector("[data-course-editor-close]")?.addEventListener("click", () => { editor.hidden = true; });
+    editor.querySelector("[data-module-list]")?.addEventListener("click", (event) => {
+      const removeButton = event.target.closest("[data-module-remove]");
+      if (removeButton) removeButton.closest("[data-module-row]").remove();
+    });
     editor.querySelector("[data-course-edit-form]")?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const errorEl = editor.querySelector("[data-course-edit-error]");
       errorEl.textContent = "";
       const rows = [...editor.querySelectorAll("[data-module-row]")];
       const modules = rows.map((row, index) => ({
-        id: row.querySelector(`[name="module-id-${index}"]`).value.trim() || `module-${index + 1}`,
-        title: row.querySelector(`[name="module-title-${index}"]`).value.trim(),
-        description: row.querySelector(`[name="module-description-${index}"]`).value.trim(),
+        id: row.querySelector("[data-module-id]").value.trim() || `module-${index + 1}`,
+        title: row.querySelector("[data-module-title]").value.trim(),
+        description: row.querySelector("[data-module-description]").value.trim(),
       })).filter((module) => module.title && module.description);
       const payload = {
         title: editor.querySelector('[name="title"]').value.trim(),

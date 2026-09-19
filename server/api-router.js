@@ -55,6 +55,12 @@ const routes = [
     handler: withParams(adminRoutes.handleUpdateUser, ["id"]),
   },
   {
+    method: "DELETE",
+    pattern: new RegExp(`^/api/admin/users/(${OBJECT_ID_PATTERN})$`),
+    auth: "admin",
+    handler: withParams(adminRoutes.handleDeleteUser, ["id"]),
+  },
+  {
     method: "POST",
     pattern: new RegExp(`^/api/admin/users/(${OBJECT_ID_PATTERN})/reset-access$`),
     auth: "admin",
@@ -74,6 +80,12 @@ const routes = [
     pattern: new RegExp(`^/api/admin/courses/(${OBJECT_ID_PATTERN})$`),
     auth: "admin",
     handler: withParams(adminRoutes.handleUpdateCourse, ["id"]),
+  },
+  {
+    method: "DELETE",
+    pattern: new RegExp(`^/api/admin/courses/(${OBJECT_ID_PATTERN})$`),
+    auth: "admin",
+    handler: withParams(adminRoutes.handleDeleteCourse, ["id"]),
   },
   {
     method: "POST",

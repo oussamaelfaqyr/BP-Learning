@@ -96,12 +96,12 @@ test("password reset also verifies the email address", async () => {
   const token = tokenFromUrl(forgot.json.devResetUrl);
 
   const reset = await client.request("POST", "/api/auth/reset-password", {
-    body: { token, password: "NouveauMotDePasse-456!" },
+    body: { token, password: "nouveaumodepassedemo" },
   });
   assert.equal(reset.status, 200);
 
   const login = await client.request("POST", "/api/auth/login", {
-    body: { email: user.payload.email, password: "NouveauMotDePasse-456!" },
+    body: { email: user.payload.email, password: "nouveaumodepassedemo" },
   });
   assert.equal(login.status, 200);
   assert.equal(login.json.user.emailVerified, true);

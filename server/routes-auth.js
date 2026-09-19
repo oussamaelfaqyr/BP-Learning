@@ -56,7 +56,7 @@ async function handleRegister(req, res) {
   if (existing) return sendError(res, "email_taken");
 
   const passwordHash = await hashPassword(password);
-  const role = "admin";
+  const role = config.adminEmails.includes(email.toLowerCase()) ? "admin" : "user";
   let user;
   try {
     user = await store.createUser({ firstName, lastName, email, role, passwordHash });

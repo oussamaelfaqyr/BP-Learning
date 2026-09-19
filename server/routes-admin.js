@@ -207,6 +207,14 @@ async function handleUpdateUser(req, res, auth) {
     update.status = body.status;
   }
 
+  const removesActiveAdmin =
+    target.role === "admin" &&
+    target.status === "active" &&
+    (update.status === "disabled" || update.role === "user");
+  if (removesActiveAdmin && (await store.countActiveAdmins()) <= 1) {
+    return sendError(res, "last_admin");
+  }
+
   const updated = await store.updateUser(target._id, update);
   if (update.status === "disabled") {
     await store.deleteAllSessionsForUser(target._id);
@@ -244,6 +252,24 @@ async function handleResetAccess(req, res, auth) {
     invitation: { sent: emailResult.delivered },
     ...(config.isProduction ? {} : { devResetUrl: resetUrl }),
   });
+}
+
+async function handleDeleteUser(req, res, auth) {
+  if (req.method !== "DELETE") return sendError(res, "method_not_allowed");
+  const target = await store.findUserById(req.params.id);
+  if (!target) return sendError(res, "user_not_found");
+  if (target._id.toString() === auth.user._id.toString()) {
+    return sendError(res, "cannot_delete_self");
+  }
+  if (target.role === "admin" && target.status === "active" && (await store.countActiveAdmins()) <= 1) {
+    return sendError(res, "last_admin");
+  }
+  await store.deleteUserAccount(target._id);
+  await store.recordAudit("USER_DELETED", auth.user._id, target._id, {
+    email: target.email,
+    role: target.role,
+  });
+  sendJson(res, 200, { ok: true });
 }
 
 /* ----------------------------- messages ----------------------------- */
@@ -481,6 +507,15 @@ async function handleArchiveCourse(req, res, auth) {
   sendJson(res, 200, { course: store.publicCourse(updated || course) });
 }
 
+async function handleDeleteCourse(req, res, auth) {
+  if (req.method !== "DELETE") return sendError(res, "method_not_allowed");
+  const course = await store.findCourseById(req.params.id);
+  if (!course) return sendError(res, "course_not_found");
+  await store.deleteCourse(course._id);
+  await store.recordAudit("COURSE_DELETED", auth.user._id, course._id, { title: course.title });
+  sendJson(res, 200, { ok: true });
+}
+
 /* ---------------------------- assignments ---------------------------- */
 
 async function handleListAssignments(req, res) {
@@ -585,6 +620,7 @@ module.exports = {
   handleCreateUser,
   handleUpdateUser,
   handleResetAccess,
+  handleDeleteUser,
   handleSendMessage,
   handleUserPerformance,
   handleListCourses,
@@ -593,6 +629,7 @@ module.exports = {
   handleUpdateCourse,
   handlePublishCourse,
   handleArchiveCourse,
+  handleDeleteCourse,
   handleListAssignments,
   handleAssignCourse,
   handleUnassignCourse,

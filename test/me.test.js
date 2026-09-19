@@ -216,18 +216,18 @@ test("profile update validates names and objective", async () => {
 
 test("password change: wrong current password rejected, correct one works", async () => {
   const wrong = await client.request("PUT", "/api/me/password", {
-    body: { currentPassword: "FauxMotDePasse-999", newPassword: "NouveauMotDePasse-321!" },
+    body: { currentPassword: "FauxMotDePasse-999", newPassword: "nouveaumodepassedemobis" },
   });
   expectError(wrong, "password_mismatch");
 
   const ok = await client.request("PUT", "/api/me/password", {
-    body: { currentPassword: USER_PASSWORD, newPassword: "NouveauMotDePasse-321!" },
+    body: { currentPassword: USER_PASSWORD, newPassword: "nouveaumodepassedemobis" },
   });
   assert.equal(ok.status, 200);
 
   await client.request("POST", "/api/auth/logout");
   const login = await client.request("POST", "/api/auth/login", {
-    body: { email: userEmail, password: "NouveauMotDePasse-321!" },
+    body: { email: userEmail, password: "nouveaumodepassedemobis" },
   });
   assert.equal(login.status, 200);
 });

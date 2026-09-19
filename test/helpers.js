@@ -89,7 +89,7 @@ function expectError(response, code) {
   }
 }
 
-const USER_PASSWORD = "MotDePasse-123!";
+const USER_PASSWORD = "motdemodepassededemo";
 
 async function registerUser(client, base, overrides = {}) {
   const payload = {

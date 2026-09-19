@@ -67,6 +67,7 @@ const ERROR_MESSAGES = {
   already_assigned: { status: 409, message: "Le cours est déjà affecté à cet utilisateur." },
   last_admin: { status: 409, message: "Impossible de désactiver le dernier administrateur actif." },
   cannot_self_disable: { status: 409, message: "Vous ne pouvez pas désactiver votre propre compte." },
+  cannot_delete_self: { status: 409, message: "Vous ne pouvez pas supprimer votre propre compte." },
   password_mismatch: { status: 400, message: "Le mot de passe actuel est incorrect." },
   course_invalid: { status: 502, message: "Le contenu généré n’a pas pu être validé. Réessayez." },
   ai_unavailable: { status: 503, message: "Le service IA est momentanément indisponible." },

@@ -27,7 +27,7 @@ test("excessive login attempts are rate limited", async () => {
   let limited = false;
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const response = await client.request("POST", "/api/auth/login", {
-      body: { email: user.payload.email, password: "MauvaisMotDePasse-999!" },
+      body: { email: user.payload.email, password: "mauvaisdemodepassedebis" },
     });
     if (response.status === 429) {
       limited = true;
@@ -46,7 +46,7 @@ test("rate limiting applies per email even from different IPs", async () => {
 
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const response = await otherClient.request("POST", "/api/auth/login", {
-      body: { email: user.payload.email, password: "MauvaisMotDePasse-999!" },
+      body: { email: user.payload.email, password: "mauvaisdemodepassedebis" },
       headers: otherClient.extraHeaders,
     });
     if (response.status === 429) return;

@@ -165,7 +165,22 @@ async function countUsers(filter = {}) {
 }
 
 async function countActiveAdmins() {
-  return collections().users.countDocuments({ status: "active" });
+  return collections().users.countDocuments({ role: "admin", status: "active" });
+}
+
+async function deleteUserAccount(id) {
+  const objectId = toObjectId(id);
+  if (!objectId) return false;
+  await collections().users.deleteOne({ _id: objectId });
+  await collections().sessions.deleteMany({ userId: objectId });
+  await collections().resetTokens.deleteMany({ userId: objectId });
+  await collections().verificationTokens.deleteMany({ userId: objectId });
+  await collections().lessons.deleteMany({ userId: objectId });
+  await collections().progress.deleteMany({ userId: objectId });
+  await collections().assignments.deleteMany({ userId: objectId });
+  await collections().simulations.deleteMany({ userId: objectId });
+  await collections().evaluations.deleteMany({ userId: objectId });
+  return true;
 }
 
 /* ------------------------------ sessions ------------------------------ */
@@ -323,6 +338,16 @@ async function listCourses({ status = "", ownerUserId = "", limit = 100, offset 
 
 async function countCourses(filter = {}) {
   return collections().courses.countDocuments(filter);
+}
+
+async function deleteCourse(id) {
+  const objectId = toObjectId(id);
+  if (!objectId) return false;
+  await collections().courses.deleteOne({ _id: objectId });
+  await collections().assignments.deleteMany({ courseId: objectId });
+  await collections().progress.deleteMany({ courseId: objectId });
+  await collections().lessons.deleteMany({ courseId: objectId });
+  return true;
 }
 
 /* ------------------------------ lessons ------------------------------ */
@@ -596,6 +621,7 @@ module.exports = {
   listUsers,
   countUsers,
   countActiveAdmins,
+  deleteUserAccount,
   createSession,
   findSession,
   touchSession,
@@ -611,6 +637,7 @@ module.exports = {
   updateCourse,
   listCourses,
   countCourses,
+  deleteCourse,
   saveLesson,
   findLesson,
   assignCourse,

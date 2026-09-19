@@ -37,7 +37,7 @@ test("auth-protected endpoints return 503 db_unavailable when the database is do
   expectError(me, "db_unavailable");
   assert.equal(me.status, 503);
   const register = await client.request("POST", "/api/auth/register", {
-    body: { firstName: "A", lastName: "B", email: "x@example.com", password: "MotDePasse-123!" },
+    body: { firstName: "A", lastName: "B", email: "x@example.com", password: "motdemodepassededemo" },
   });
   expectError(register, "db_unavailable");
 });

@@ -33,7 +33,7 @@ test("login attempts are rate limited through the shared store", async () => {
   let limited = false;
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const response = await client.request("POST", "/api/auth/login", {
-      body: { email: user.payload.email, password: "MauvaisMotDePasse-999!" },
+      body: { email: user.payload.email, password: "mauvaisdemodepassedebis" },
     });
     if (response.status === 429) {
       assert.equal(response.json.error.code, "RATE_LIMITED");

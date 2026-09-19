@@ -53,6 +53,10 @@ function requireRole(role) {
   return async (req, res) => {
     const auth = await requireAuth()(req, res);
     if (!auth) return null;
+    if (auth.user.role !== role) {
+      sendError(res, "forbidden");
+      return null;
+    }
     return auth;
   };
 }

@@ -90,7 +90,7 @@ test("login succeeds with correct credentials and fails with wrong password", as
   await client.request("POST", "/api/auth/logout");
 
   const wrong = await client.request("POST", "/api/auth/login", {
-    body: { email: user.payload.email, password: "MauvaisMotDePasse-123" },
+    body: { email: user.payload.email, password: "mauvaisdemodepassedemo" },
   });
   expectError(wrong, "invalid_credentials");
 
@@ -107,7 +107,7 @@ test("login succeeds with correct credentials and fails with wrong password", as
 
 test("unknown email login returns the same generic error", async () => {
   const response = await client.request("POST", "/api/auth/login", {
-    body: { email: "unknown@example.com", password: "Quelconque-123" },
+    body: { email: "unknown@example.com", password: "quelconquedemodepassedemo" },
   });
   expectError(response, "invalid_credentials");
 });
@@ -138,7 +138,7 @@ test("password reset flow: token works once and enables login with new password"
     body: { email: user.payload.email },
   });
   const token = forgot.json.devResetUrl.split("token=")[1];
-  const newPassword = "NouveauMotDePasse-456!";
+  const newPassword = "nouveaumodepassedemo";
 
   const reset = await client.request("POST", "/api/auth/reset-password", {
     body: { token, password: newPassword },
@@ -169,7 +169,7 @@ test("reset password invalidates existing sessions", async () => {
   });
   const token = forgot.json.devResetUrl.split("token=")[1];
   await client.request("POST", "/api/auth/reset-password", {
-    body: { token, password: "EncoreUnMotDePasse-789!" },
+    body: { token, password: "encoreunmodepassededemo" },
   });
   const me = await client.request("GET", "/api/me");
   expectError(me, "unauthorized");

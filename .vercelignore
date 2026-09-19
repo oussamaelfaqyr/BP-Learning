@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+.tts-cache/
+test/
+scripts/
+tts/
+coverage/
+node_modules/
+*.md
+FILE-MANIFEST.sha256

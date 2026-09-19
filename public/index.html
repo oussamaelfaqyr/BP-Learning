@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'; media-src 'self' blob:"
+    />
+    <meta name="description" content="BP Learning — plateforme d’apprentissage par IA pour les équipes officinales : parcours personnalisés, leçons, coach IA, simulations client et suivi de progression." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BP Learning — Plateforme d’apprentissage" />
+    <meta property="og:description" content="Apprenez. Pratiquez. Progressez. Des parcours personnalisés, des exercices et des simulations avec un retour concret de l’IA." />
+    <title>BP Learning — Plateforme d’apprentissage</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="experience.css" />
+    <script src="icons.js" defer></script>
+    <script src="fixtures.js" defer></script>
+    <script src="platform.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu</a>
+    <header class="site-header">
+      <a class="brand" href="#/" data-route="platform" aria-label="BP Learning — retour à l’accueil">
+        <span class="brand-mark" aria-hidden="true">BP</span>
+        <span class="brand-text">
+          <strong>BP Learning</strong>
+          <small>Plateforme d’apprentissage</small>
+        </span>
+      </a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span class="nav-toggle-icon" aria-hidden="true"></span>
+      </button>
+      <nav class="main-nav" aria-label="Navigation principale" data-nav></nav>
+      <div class="auth-area" data-auth-area></div>
+    </header>
+
+    <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
+      <nav aria-label="Navigation mobile" data-mobile-nav-links></nav>
+      <div class="mobile-nav-auth" data-mobile-auth></div>
+    </div>
+    <div class="mobile-nav-backdrop" data-nav-backdrop hidden></div>
+
+    <main id="main" tabindex="-1">
+      <section class="view" data-view="start" aria-labelledby="start-title" hidden></section>
+      <section class="view" data-view="vorbereitung" aria-labelledby="prep-title" hidden></section>
+      <section class="view" data-view="simulation" aria-labelledby="sim-title" hidden></section>
+      <section class="view" data-view="ia" aria-labelledby="ia-title" hidden></section>
+      <section class="view" data-view="accueil" aria-labelledby="accueil-title" hidden></section>
+      <section class="view" data-view="parcours" aria-labelledby="parcours-title" hidden></section>
+      <section class="view" data-view="parcours-detail" aria-labelledby="parcours-detail-title" hidden></section>
+      <section class="view" data-view="formations" aria-labelledby="formations-title" hidden></section>
+      <section class="view" data-view="simulations" aria-labelledby="simulations-title" hidden></section>
+      <section class="view" data-view="progression" aria-labelledby="progression-title" hidden></section>
+      <section class="view" data-view="lecon" aria-labelledby="lecon-title" hidden></section>
+      <section class="view" data-view="abschluss" aria-labelledby="result-title" hidden></section>
+      <section class="view" data-view="lernplan" aria-labelledby="plan-title" hidden></section>
+      <section class="view" data-view="platform" aria-labelledby="platform-title" hidden></section>
+    </main>
+
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <noscript>JavaScript doit être activé pour utiliser l’entraînement.</noscript>
+  </body>
+</html>

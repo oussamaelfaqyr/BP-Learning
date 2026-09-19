@@ -1,0 +1,22 @@
+{
+  "name": "bp-learning",
+  "version": "2.0.0",
+  "description": "BP Learning — plateforme de formation IA pour pharmaciens (multi-utilisateurs)",
+  "private": true,
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "mongodb": "^6.21.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "mongodb-memory-server": "^11.2.0"
+  }
+}
